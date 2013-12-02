@@ -5,8 +5,9 @@ var ldsOrg = 'http://www.lds.org'
   , terms = ['ysa%20stake', 'ysa%20branch', 'student%20stake', 'student%20branch']
   , term
   , i
+  , ysaMap = {}
   ;
-  
+
 function findYsa(search, cb) {
   $.ajax({
     type: 'GET'
@@ -26,15 +27,43 @@ for (i = 0; i < lastStudentWard; i += 1) {
 }
 
 function done() {
-  console.log('Done');
-  var ysaMap = {}
+  var keys
     ;
     
+  console.log('Done');
+  
   things.forEach(function (unit) {
     if ('ward.ysa' === unit.type || 'stake.ysa' === unit.type || 'ward.student' === unit.type || 'stake.student' === unit.type) {
       ysaMap[unit.id] = unit;
     }
   });
+  
+  keys = Object.keys(ysaMap);
+  
+  function getDetails(id, cb) {
+    $.ajax({
+      type: 'GET'
+    , url: ldsOrg + "/maps/services/layers/details?id=" + id + "&layer=ward.ysa&lang=eng"
+    }).success(function (data) {
+      console.log(keys.length);
+      ysaMap[id] = data;
+      cb();
+    });
+  }
+  
+  function getOneDetail() {
+    var key = keys.pop()
+      ;
+    
+    if (key) {  
+      getDetails(ysaMap[key].id, getOneDetail);
+    } else {
+      console.log('Done');
+      document.body.innerHTML = '<pre>' + JSON.stringify(ysaMap, null, '  ').replace(/</g, '&lt;') + '</pre>';
+    }
+  }
+  getOneDetail();
+
   //document.body.innerHTML = '<pre>' + JSON.stringify(things, null, '  ').replace(/</g, '&lt;') + '</pre>';
   document.body.innerHTML = '<pre>' + JSON.stringify(ysaMap, null, '  ').replace(/</g, '&lt;') + '</pre>';
 }
